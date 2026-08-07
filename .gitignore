@@ -1,0 +1,22 @@
+# Punto de partida. Amplíalo con lo que haga falta según lo que uses.
+# Revisar qué debe ir aquí es parte de la prueba: hay cosas que generan
+# Terraform, Docker o tu editor que no deberían acabar en el repositorio.
+
+# Secretos y entorno
+.env
+*.pem
+*.key
+id_rsa*
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

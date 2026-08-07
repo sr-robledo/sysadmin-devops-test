@@ -1,0 +1,15 @@
+[Unit]
+Description=TODO
+
+[Service]
+# ¿Qué tipo de servicio es esto? ¿oneshot? ¿simple? ¿por qué?
+Type=
+ExecStart=/ruta/al/script.sh
+
+# ¿Con qué usuario debe correr esto? ¿root? Justifícalo.
+User=
+
+# ¿Qué pasa si el script falla? ¿Y dónde acaban stdout y stderr?
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+[Unit]
+Description=Verifica que el último backup de inventario se ha generado correctamente
+After=inventario-backup.timer
+Documentation=man:backup-watchdog.sh
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+# Espera 30 min tras la hora del backup para no evaluarlo antes de que termine.
+ExecStart=/usr/local/bin/backup-watchdog.sh
+StandardOutput=journal
+StandardError=journal
+
+# Si el script sale con código 0 → OK.
+# Si sale con 1 → journal + intentar mail.
+# Para que aparezca en `systemctl --failed` usamos un "marker":
+#   OnFailure=inventario-backup-watchdog-failure@%n.service
+#   Pero eso añade complejidad; para esta prueba basta con journal + mail.

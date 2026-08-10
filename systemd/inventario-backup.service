@@ -1,0 +1,56 @@
+[Unit]
+Description=Backup diario de la base de datos de inventario
+Documentation=man:backup-db.sh
+# Si falla el backup no hace falta reiniciar nada; es un job batch.
+# Tampoco queremos que se reintente automáticamente sin querer.
+StartLimitIntervalSec=0
+
+[Service]
+# Type=oneshot: la unidad termina cuando el script termina. Adecuado
+# para jobs batch (vs. simple, que asume un proceso en foreground).
+Type=oneshot
+
+# Ejecutar como root: pg_dump necesita acceso a la base de datos, y la
+# contraseña vive en /etc/inventario/backup.env (root:root 0640).
+# No merece la pena un usuario dedicado solo para esto.
+User=root
+Group=root
+
+ExecStart=/usr/local/bin/backup-db.sh
+
+# Entorno: PATH mínimo + localización
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="LC_ALL=C.UTF-8"
+Environment="LANG=C.UTF-8"
+
+# Logs: stdout/stderr al journal; el script ya hace su propio tee al
+# fichero de log. Tener ambos es lo más práctico para depurar.
+StandardOutput=journal
+StandardError=journal
+
+# Límites de seguridad
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/backups/inventario /var/log/inventario /tmp
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+# Permitir solo syscalls mínimos (perfil conservador)
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Watchdog: si el script se cuelga más de 1h, systemd lo mata.
+# (pg_dump contra una BD grande no debería tardar tanto.)
+WatchdogSec=3600
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

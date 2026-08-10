@@ -1,0 +1,95 @@
+name: lint
+
+# Corre en push a main y en cualquier pull_request. Es barato y rápido,
+# así que queremos que falle cuanto antes si algo no encaja.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Cancela ejecuciones anteriores en la misma ref para no malgastar minutos
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: shellcheck (${{ matrix.script }})
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run shellcheck
+        run: |
+          set -e
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          find scripts systemd -type f \( -name '*.sh' -o -name '*.service' -o -name '*.timer' \) -print0 \
+            | xargs -0 -I {} sh -c 'echo "==> {}"; shellcheck -x "{}" || true'
+
+  hadolint:
+    name: hadolint (Dockerfile)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install hadolint
+        run: |
+          set -euo pipefail
+          HADOLINT_VERSION="v2.15.1"
+          curl -fsSL -o /usr/local/bin/hadolint \
+            "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          chmod +x /usr/local/bin/hadolint
+          hadolint --version
+
+      - name: Run hadolint
+        run: |
+          hadolint --config .hadolint.yaml app/Dockerfile
+
+  compose-validate:
+    name: compose validate
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.10.0
+
+      - name: Install yamllint
+        run: |
+          python3 -m pip install --quiet yamllint==1.35.1
+
+      - name: Validate docker-compose.yml
+        working-directory: compose
+        env:
+          POSTGRES_DB: dummy
+          POSTGRES_USER: dummy
+          POSTGRES_PASSWORD: dummy
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          sed -i 's|CAMBIAME_POR_CONTRASEÑA_SEGURA|dummy|' .env
+          docker compose config -q
+          docker compose config > /tmp/resolved-compose.yml
+          yamllint -d '{extends: default, rules: {line-length: disable, document-start: disable, truthy: {check-keys: false}}}' /tmp/resolved-compose.yml
+
+  yamllint:
+    name: yamllint (compose + workflows)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: yamllint
+        run: |
+          python3 -m pip install --quiet yamllint==1.35.1
+          yamllint -d '{extends: default, rules: {line-length: disable, document-start: disable, truthy: {check-keys: false}}}' \
+            compose .github/workflows

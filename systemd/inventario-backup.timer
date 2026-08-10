@@ -1,0 +1,20 @@
+[Unit]
+Description=Backup diario de la base de datos de inventario
+Documentation=man:systemd.timer
+
+[Timer]
+# Diariamente a las 03:00 (madrugada, poca carga).
+# Formato OnCalendar: "*-*-* 03:00:00" = todos los días a las 3 de la mañana.
+OnCalendar=*-*-* 03:00:00
+# RandomizedDelaySec para evitar la "thundering herd" si muchos servidores
+# se sincronizan a la misma hora exacta. 10 min es suficiente.
+RandomizedDelaySec=10min
+# Persistent=true: si la máquina estuvo apagada a las 03:00, el timer
+# recuerda la última ejecución y la lanza en el siguiente arranque.
+Persistent=true
+# No ejecutar al activar el timer (no tiene sentido para un backup diario).
+# (Unit= por defecto = mismo nombre con .service)
+Unit=inventario-backup.service
+
+[Install]
+WantedBy=timers.target

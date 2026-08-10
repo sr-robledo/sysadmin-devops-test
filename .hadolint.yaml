@@ -1,0 +1,21 @@
+---
+# Configuración de hadolint para este repo.
+# Reglas desactivadas, con motivo:
+#
+#   DL3008 — "Pin versions in apt-get install"
+#     Aceptable para un Debian estable que recibe updates de seguridad.
+#     Pinning añadiría ruido en cada CVE de glibc. No compensa aquí.
+#
+#   DL3025 — "Use arguments JSON notation for CMD/ENTRYPOINT/HEALTHCHECK"
+#     En HEALTHCHECK CMD usamos un python -c con string, y la versión
+#     JSON requiere poner ["python", "-c", "..."] o un script externo.
+#     No merece la pena para un healthcheck que es de una línea.
+#
+#   DL3066 — "Non-numeric user-id may not be resolvable by host system"
+#     Al revés: queremos UID numérico (10001) para que el mapeo entre
+#     host y contenedor sea explícito y portable a Kubernetes.
+
+ignored:
+  - DL3008
+  - DL3025
+  - DL3066

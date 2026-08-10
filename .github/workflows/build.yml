@@ -1,0 +1,81 @@
+name: build
+
+# Construye y publica la imagen en GHCR.
+# Diferencias de comportamiento entre push y pull_request:
+#   • push a main → etiqueta sha + semver + latest, push a GHCR
+#   • pull_request → solo build (no push). Sirve para que el PR tenga
+#     evidencia de que la imagen compila, sin contaminar el registro
+#     con imágenes de PRs.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write   # solo si realmente vamos a hacer push
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/inventario-api
+
+jobs:
+  build:
+    name: build & push
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.10.0
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.7.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Estrategia de etiquetado:
+          #   • sha-<7>  → siempre, para trazabilidad exacta del commit
+          #   • semver   → si es un tag vX.Y.Z
+          #   • latest   → solo en push a main
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value={{branch}},enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=inventario-api
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@5cd11b3a4ced054e52742c5fd84d8c3b3a8a18dd # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (and push)
+        uses: docker/build-push-action@5cd11b3a4ced054e52742c5fd84d8c3b3a8a18dd # v6.10.0
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Cache: usa el registry cache si estamos pusheando, local en otro caso.
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+          provenance: true
+          sbom: true

@@ -1,11 +1,13 @@
 #!/bin/bash
+# Raíz del repo (calculada desde la ubicación del script)
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Instala y activa el timer de backup. Lo ejecuta todo en una sola sesión
 # para que systemctl no pierda el bus entre llamadas.
 set -e
 
-SCRIPT_SRC="/mnt/h/Prueba cibervoluntarios/scripts/backup-db.sh"
-SERVICE_SRC="/mnt/h/Prueba cibervoluntarios/systemd/inventario-backup.service"
-TIMER_SRC="/mnt/h/Prueba cibervoluntarios/systemd/inventario-backup.timer"
+SCRIPT_SRC="${REPO_ROOT}/scripts/backup-db.sh"
+SERVICE_SRC="${REPO_ROOT}/systemd/inventario-backup.service"
+TIMER_SRC="${REPO_ROOT}/systemd/inventario-backup.timer"
 
 echo "=== Instalando script y unidades ==="
 sudo install -m 0755 -o root -g root "$SCRIPT_SRC"   /usr/local/bin/backup-db.sh

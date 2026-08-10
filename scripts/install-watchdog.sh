@@ -4,9 +4,9 @@ set -e
 
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq mailutils >/dev/null
 
-sudo install -m 0755 -o root -g root /mnt/h/Prueba\ cibervoluntarios/scripts/backup-watchdog.sh /usr/local/bin/backup-watchdog.sh
-sudo install -m 0644 -o root -g root /mnt/h/Prueba\ cibervoluntarios/systemd/inventario-backup-watchdog.service /etc/systemd/system/
-sudo install -m 0644 -o root -g root /mnt/h/Prueba\ cibervoluntarios/systemd/inventario-backup-watchdog.timer    /etc/systemd/system/
+sudo install -m 0755 -o root -g root "$(cd "$(dirname "$0")/.." && pwd)"/scripts/backup-watchdog.sh /usr/local/bin/backup-watchdog.sh
+sudo install -m 0644 -o root -g root "$(cd "$(dirname "$0")/.." && pwd)"/systemd/inventario-backup-watchdog.service /etc/systemd/system/
+sudo install -m 0644 -o root -g root "$(cd "$(dirname "$0")/.." && pwd)"/systemd/inventario-backup-watchdog.timer    /etc/systemd/system/
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now inventario-backup-watchdog.timer

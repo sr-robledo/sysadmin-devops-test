@@ -4,9 +4,14 @@
 
 # Secretos y entorno
 .env
+*.env
+!.env.example
+etc/inventario/backup.env
+!etc/inventario/backup.env.example
 *.pem
 *.key
 id_rsa*
+id_ed25519*
 
 # Sistema operativo y editores
 .DS_Store
@@ -14,9 +19,30 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+*~
 
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 .venv/
 venv/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform.lock.hcl
+tfplan
+tfplan.json
+crash.log
+crash.*.log
+
+# Docker
+docker-compose.override.yml
+compose/.env

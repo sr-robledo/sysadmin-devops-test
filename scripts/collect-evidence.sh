@@ -1,7 +1,7 @@
 #!/bin/bash
 # Recopila evidencias para ENTREGA.md (Bloque A y B)
 set +e
-cd /mnt/h/Prueba\ cibervoluntarios
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 echo "================ EVIDENCIA: ufw status ================"
 sudo ufw status verbose
@@ -28,7 +28,7 @@ sudo ls -la /var/backups/inventario/
 
 echo
 echo "================ EVIDENCIA: docker compose ps ================"
-cd /mnt/h/Prueba\ cibervoluntarios/compose
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/compose"
 sudo docker compose ps
 
 echo
@@ -50,12 +50,12 @@ shellcheck -x /usr/local/bin/backup-db.sh && echo "shellcheck OK"
 
 echo
 echo "================ EVIDENCIA: hadolint ================"
-cd /mnt/h/Prueba\ cibervoluntarios
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 hadolint app/Dockerfile
 echo "hadolint exit: $?"
 
 echo
 echo "================ EVIDENCIA: terraform fmt + validate ================"
-cd /mnt/h/Prueba\ cibervoluntarios/terraform
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/terraform"
 terraform fmt -check -recursive && echo "fmt OK"
 terraform validate

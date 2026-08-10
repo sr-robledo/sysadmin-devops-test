@@ -2,7 +2,7 @@
 set -e
 sudo systemctl start docker
 sleep 3
-cd /mnt/h/Prueba\ cibervoluntarios/compose
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/compose"
 sudo docker compose up -d 2>&1 | tail -5
 sleep 8
 echo "=== compose ps ==="

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd /mnt/h/Prueba\ cibervoluntarios/terraform
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/terraform"
 
 # Asegurar que docker está arriba (lo paramos en algún test)
 sudo systemctl start docker 2>/dev/null || true

@@ -15,4 +15,4 @@ echo "Clave persistente en $PERSIST"
 
 # Aprovisionar
 sudo AUTHORIZED_KEY_FILE="$PERSIST/authorized_keys" \
-     /mnt/h/Prueba\ cibervoluntarios/scripts/provision-server.sh 2222
+     "$(cd "$(dirname "$0")/.." && pwd)"/scripts/provision-server.sh 2222

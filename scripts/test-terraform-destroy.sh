@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd /mnt/h/Prueba\ cibervoluntarios/terraform
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}/terraform"
 
 export TF_VAR_db_password="test_terraform_pass_123"
 export TF_VAR_db_name="inventario"

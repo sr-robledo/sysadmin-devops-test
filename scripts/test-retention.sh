@@ -11,7 +11,7 @@ echo "Antes de la retención:"
 ls -la "${BACKUP_DIR}/"
 
 echo "--- Ejecutando backup ---"
-sudo ENV_FILE=/etc/inventario/backup.env /mnt/h/Prueba\ cibervoluntarios/scripts/backup-db.sh 2>&1 | tail -8
+sudo ENV_FILE=/etc/inventario/backup.env "$(cd "$(dirname "$0")/.." && pwd)"/scripts/backup-db.sh 2>&1 | tail -8
 
 echo "--- Tras la retención ---"
 ls -la "${BACKUP_DIR}/"

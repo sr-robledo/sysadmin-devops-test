@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /mnt/h/Prueba\ cibervoluntarios
+cd "${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 echo "=== hadolint ==="
 hadolint app/Dockerfile
 echo "exit: $?"

@@ -1,0 +1,11 @@
+[Unit]
+Description=TODO
+
+[Timer]
+# Se quiere un backup diario de madrugada.
+# Si el servidor estaba apagado a esa hora, el backup no debe perderse.
+OnCalendar=
+Persistent=
+
+[Install]
+WantedBy=timers.target

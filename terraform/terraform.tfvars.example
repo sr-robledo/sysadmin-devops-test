@@ -1,0 +1,14 @@
+# terraform/terraform.tfvars.example
+# Copiar como terraform.tfvars y rellenar el valor real:
+#   cp terraform.tfvars.example terraform.tfvars
+#   chmod 0600 terraform.tfvars
+#
+# El .tfvars real NO se versiona. .gitignore ya lo cubre.
+#
+# Generar la contraseña con:
+#   openssl rand -base64 24
+
+db_name     = "inventario"
+db_user     = "inventario"
+db_password = "CAMBIAME_POR_CONTRASEÑA_SEGURA"
+db_image    = "postgres:16-alpine"

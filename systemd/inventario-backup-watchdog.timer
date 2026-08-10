@@ -1,0 +1,12 @@
+[Unit]
+Description=Cada 30 min, verifica que el último backup de inventario existe y no está vacío
+Documentation=man:systemd.timer
+
+[Timer]
+# Tras la hora del backup (03:00 + retardo aleatorio 0-10 min)
+# dejamos 30 min para que termine, y luego revisamos.
+OnCalendar=*:0/30
+Unit=inventario-backup-watchdog.service
+
+[Install]
+WantedBy=timers.target

@@ -1,42 +1,128 @@
-# Este compose "levanta" la aplicación, pero tiene bastantes problemas:
-# de seguridad, de persistencia, de arranque y de mantenibilidad.
+# docker-compose.yml — aplicación de inventario
 #
-# Tu trabajo: convertirlo en algo que dejarías corriendo en un servidor
-# de la Fundación. Justifica los cambios en ENTREGA.md.
+# Mejoras respecto al original:
+#   • Quitado el bind del docker.sock y `privileged: true` del proxy
+#     (era dar root al host desde el contenedor)
+#   • db no expone 5432 al host (solo en la red interna)
+#   • api no expone 8080 al host (solo el proxy habla con ella)
+#   • Secretos desde .env (con .env.example documentado), no hardcodeados
+#   • depends_on con healthcheck: la api espera a que la db esté READY
+#   • restart: unless-stopped para que vuelva tras un reinicio del host
+#   • healthchecks en db, api y proxy
+#   • Límites de recursos
+#   • Volumen nombrado para la BD (sobrevive a `docker compose down`)
+#   • Sin `version:` (obsoleto en Compose v2)
+#   • Usuario no-root en api (la imagen ya lo define, esto refuerza)
+#
+# Antes de levantar:
+#   1. cp .env.example .env  y editar los valores
+#   2. docker compose pull && docker compose up -d
 
-version: "3"
+name: inventario
 
 services:
 
   db:
-    image: postgres
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: inventario
-      POSTGRES_USER: inventario
-      POSTGRES_PASSWORD: inventario123
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Sane defaults
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # NO expone 5432 al host: solo accesible desde la red interna.
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    # NO hay `user:` aquí: la imagen oficial de postgres necesita
+    # usuario postgres internamente. El endurecimiento real está en
+    # la api y el proxy.
 
   api:
-    build: ../app
+    build:
+      context: ../app
+      dockerfile: Dockerfile
+    image: inventario-api:local
+    restart: unless-stopped
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: inventario
-      DB_USER: inventario
-      DB_PASSWORD: inventario123
-    ports:
-      - "8080:8080"
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_PORT: 8080
+    networks:
+      - backend
+    # NO expone 8080 al host: solo el proxy interno habla con la api
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:8080/ready',timeout=3); sys.exit(0 if r.status==200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
+          memory: 384M
+    security_opt:
+      - no-new-privileges:true
+    # user ya viene del Dockerfile (uid 10001)
 
   proxy:
-    image: nginx
+    image: nginx:1.27-alpine
+    restart: unless-stopped
     ports:
+      # Solo el 80 (y 443 si hubiera TLS) es público. La API y la DB
+      # no son alcanzables desde el host, solo vía el proxy.
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - /var/run/docker.sock:/var/run/docker.sock
-    privileged: true
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - backend
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+    # Eliminados:
+    #   • /var/run/docker.sock:/var/run/docker.sock  → acceso root al host
+    #   • privileged: true                           → mismo problema
+    #   • depends_on: api (sin condition)            → se quedaba sin api lista
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db-data:
+    name: inventario-db-data

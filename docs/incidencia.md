@@ -381,14 +381,14 @@ llegado la primera noche en que la retención falló: el ratio
 El chequeo HTTP sí se disparó a las 03:45. Mandó un correo a
 `sistemas@`. A las 03:45 nadie lee ese buzón, y el lunes a
 primera hora tenía 1.400 correos sin leer. El aviso no fue
-inútil por la herramienta, fue inútil por el **canal**:信箱
+inútil por la herramienta, fue inútil por el **canal**: correo
 electrónico sin paginación, sin guardia, sin escalado.
 
 Para una organización pequeña, lo proporcionado no es PagerDuty
 (que vale para organizaciones que se lo pueden permitir), es:
 
 * Aviso a un canal con personas activas a esa hora (en
- 半夜值班轮换).
+ una guardia rotatoria).
 * O alerta a un servicio que sí pita: Pushover, Telegram
   bot, SMS vía gateway, llamada automática.
 * O, más sencillo: que la alerta **se acumule con otra cosa

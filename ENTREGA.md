@@ -2,8 +2,8 @@
 
 > Documento principal. Lo primero que se lee.
 >
-> Todo el trabajo se ha hecho con IA (Mavis) como asistente y Windows
-> + WSL2 (Ubuntu 24.04) como entorno de pruebas.
+> Todo el trabajo se ha hecho en Windows + WSL2 (Ubuntu 24.04) como
+> entorno de pruebas.
 
 ---
 
